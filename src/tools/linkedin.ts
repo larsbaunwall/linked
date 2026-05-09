@@ -2,10 +2,9 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 
 import { LinkedInApiError, LinkedInClient } from "../linkedin/client.js";
-import { LINKEDIN_AUTHORIZATION_ENV, type LinkedInRuntimeConfig } from "../linkedin/config.js";
+import { readLinkedInRuntimeConfig, type LinkedInRuntimeConfig } from "../linkedin/config.js";
 import {
   ACTIVITY_DOMAINS,
-  DEFAULT_LINKEDIN_API_VERSION,
   DEFAULT_PROFILE_DOMAINS,
   PROFILE_DOMAINS,
   SNAPSHOT_DOMAINS,
@@ -84,7 +83,7 @@ export type RegisterLinkedInToolsOptions = {
 
 export function registerLinkedInTools(
   server: McpServer,
-  { client = new LinkedInClient(), config = { apiVersion: DEFAULT_LINKEDIN_API_VERSION } }: RegisterLinkedInToolsOptions = {},
+  { client = new LinkedInClient(), config = readLinkedInRuntimeConfig() }: RegisterLinkedInToolsOptions = {},
 ): void {
   server.registerTool(
     "linkedin_get_profile",
@@ -241,12 +240,6 @@ export function registerLinkedInTools(
 }
 
 function resolveLinkedInAuth(config: LinkedInRuntimeConfig) {
-  if (!config.accessToken) {
-    throw new Error(
-      `Missing LinkedIn authorization. Set ${LINKEDIN_AUTHORIZATION_ENV}="Bearer <access_token>" before starting the server.`,
-    );
-  }
-
   return {
     accessToken: config.accessToken,
     apiVersion: config.apiVersion,

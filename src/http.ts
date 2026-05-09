@@ -2,7 +2,16 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
+import { readLinkedInRuntimeConfig } from "./linkedin/config.js";
 import { createUnlinkedServer } from "./mcp/server.js";
+
+let linkedInConfig;
+try {
+  linkedInConfig = readLinkedInRuntimeConfig();
+} catch (error) {
+  console.error(`[unlinked] ${error instanceof Error ? error.message : error}`);
+  process.exit(1);
+}
 
 const DEFAULT_HTTP_HOST = "127.0.0.1";
 const DEFAULT_HTTP_PORT = 3000;
@@ -21,7 +30,7 @@ type HttpResponse = ServerResponse & {
 };
 
 app.post(MCP_PATH, async (request: HttpRequest, response: HttpResponse) => {
-  const server = createUnlinkedServer();
+  const server = createUnlinkedServer({ linkedInConfig });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
   try {

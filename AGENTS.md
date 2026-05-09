@@ -14,7 +14,7 @@ Unlinked exists to let a member bring their own professional context into an ass
 - Keep the project usable by desktop MCP clients, especially Claude Desktop and GitHub Copilot.
 - Connect to LinkedIn's Member Data Portability (Member) API product.
 - Fetch LinkedIn member profile and professional-history data for the authenticated member.
-- Treat the LinkedIn access token as connection/startup secret input. For HTTP MCP transports, read it from `Authorization: Bearer <access_token>` request metadata. For stdio, read the equivalent value from `LINKEDIN_AUTHORIZATION`. Use it only to send `Authorization: Bearer <access_token>` to LinkedIn. Do not persist it, log it, echo it into MCP responses, or put it in package scripts.
+- Treat the LinkedIn access token as connection/startup secret input. For HTTP MCP transports, read it from `Authorization: Bearer <access_token>` request metadata. For stdio, read the equivalent value from `LINKEDIN_TOKEN`. Use it only to send `Authorization: Bearer <access_token>` to LinkedIn. Do not persist it, log it, echo it into MCP responses, or put it in package scripts.
 - Make clear in user-facing docs and errors that the Member Data Portability product is currently available only to LinkedIn members in the European Economic Area and Switzerland.
 - Preserve the API's read-only nature. Do not add tools that mutate LinkedIn data.
 
@@ -43,7 +43,7 @@ Important behavior from the docs:
 - Return useful `structuredContent` where practical so assistants can reliably consume profile data.
 - Keep raw data available enough for transparency, but shape common outputs around professional profile context.
 - Use tool inputs for request-shaping values such as requested domains, pagination limits, and start time. Do not require access tokens or API versions as per-tool inputs.
-- Use `LINKEDIN_AUTHORIZATION` for stdio token configuration because stdio has no HTTP authorization header. Do not put tokens in package scripts.
+- Use `LINKEDIN_TOKEN` for stdio token configuration because stdio has no HTTP authorization header. Do not put tokens in package scripts.
 - Use the Inspector's HTTP Authorization header for LinkedIn API calls when testing through the local Streamable HTTP endpoint.
 - Do not write to stdout except through the MCP stdio transport. Diagnostic logs must go to stderr.
 

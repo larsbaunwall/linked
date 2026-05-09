@@ -1,22 +1,28 @@
 import { DEFAULT_LINKEDIN_API_VERSION } from "./types.js";
 
-export const LINKEDIN_AUTHORIZATION_ENV = "LINKEDIN_AUTHORIZATION";
+export const LINKEDIN_TOKEN_ENV = "LINKEDIN_TOKEN";
 export const LINKEDIN_API_VERSION_ENV = "LINKEDIN_API_VERSION";
 
 export type LinkedInRuntimeConfig = {
-  accessToken?: string;
+  accessToken: string;
   apiVersion: string;
 };
 
 export function readLinkedInRuntimeConfig(env: NodeJS.ProcessEnv = process.env): LinkedInRuntimeConfig {
+  const accessToken = readAccessToken(env);
+  if (!accessToken) {
+    throw new Error(
+      `Missing LinkedIn token. Set ${LINKEDIN_TOKEN_ENV}=<access_token> before starting the server.`,
+    );
+  }
   return {
-    accessToken: readAccessToken(env),
+    accessToken,
     apiVersion: readNonEmptyEnv(env, LINKEDIN_API_VERSION_ENV) ?? DEFAULT_LINKEDIN_API_VERSION,
   };
 }
 
 function readAccessToken(env: NodeJS.ProcessEnv): string | undefined {
-  const value = readNonEmptyEnv(env, LINKEDIN_AUTHORIZATION_ENV);
+  const value = readNonEmptyEnv(env, LINKEDIN_TOKEN_ENV);
   if (!value) {
     return undefined;
   }

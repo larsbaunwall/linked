@@ -36,25 +36,7 @@ Add Unlinked to your Claude Desktop config (`claude_desktop_config.json`):
       "command": "npx",
       "args": ["-y", "@larsbaunwall/unlinked"],
       "env": {
-        "LINKEDIN_AUTHORIZATION": "<your_access_token>"
-      }
-    }
-  }
-}
-```
-
-## Quickstart with GitHub Copilot (VS Code)
-
-Add to your workspace `.vscode/mcp.json` (or user-level MCP config):
-
-```json
-{
-  "servers": {
-    "unlinked": {
-      "command": "npx",
-      "args": ["-y", "@larsbaunwall/unlinked"],
-      "env": {
-        "LINKEDIN_AUTHORIZATION": "<your_access_token>"
+        "LINKEDIN_TOKEN": "<your_access_token>"
       }
     }
   }
@@ -74,7 +56,7 @@ Add to your workspace `.vscode/mcp.json` (or user-level MCP config):
 
 | Environment variable | Required | Description |
 | --- | --- | --- |
-| `LINKEDIN_AUTHORIZATION` | Yes | LinkedIn access token. Accepts `Bearer <token>` or a bare token. |
+| `LINKEDIN_TOKEN` | Yes | LinkedIn access token. Accepts `Bearer <token>` or a bare token. |
 | `LINKEDIN_API_VERSION` | No | API version in `YYYYMM` format. Defaults to `202312`. |
 
 ## Run locally
