@@ -1,32 +1,50 @@
 {
-  "name": "linked",
+  "name": "@larsbaunwall/unlinked",
   "version": "1.0.0",
-  "description": "Minimal TypeScript MCP server scaffold",
+  "mcpName": "io.github.larsbaunwall/unlinked",
+  "description": "MCP server that brings your LinkedIn professional profile and experience into AI assistants like Claude Desktop and GitHub Copilot.",
   "main": "dist/index.js",
+  "bin": {
+    "unlinked": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "logo.png"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "echo \"No tests configured\"",
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts"
+    "start": "node --env-file=.env dist/index.js",
+    "start:http": "node --env-file=.env dist/http.js",
+    "dev": "tsx --env-file=.env src/index.ts",
+    "dev:http": "tsx --env-file=.env src/http.ts",
+    "inspect": "mcp-inspector node --env-file=.env dist/index.js",
+    "inspect:http": "mcp-inspector --cli http://localhost:3000/mcp --transport http"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/larsbaunwall/linked.git"
+    "url": "git+https://github.com/larsbaunwall/unlinked.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mcp",
+    "linkedin",
+    "model-context-protocol",
+    "ai",
+    "professional-profile"
+  ],
+  "author": "Lars Baunwall",
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/larsbaunwall/linked/issues"
+    "url": "https://github.com/larsbaunwall/unlinked/issues"
   },
-  "homepage": "https://github.com/larsbaunwall/linked#readme",
-  "private": true,
+  "homepage": "https://github.com/larsbaunwall/unlinked#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.21.2",
     "@types/node": "^25.6.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
