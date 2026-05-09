@@ -1,6 +1,6 @@
 {
   "name": "@larsbaunwall/unlinked",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "mcpName": "io.github.larsbaunwall/unlinked",
   "description": "MCP server that brings your LinkedIn professional profile and experience into AI assistants like Claude Desktop and GitHub Copilot.",
   "main": "dist/index.js",
