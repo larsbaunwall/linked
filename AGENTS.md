@@ -10,11 +10,10 @@ Unlinked exists to let a member bring their own professional context into an ass
 
 - Build the server with the official TypeScript MCP SDK, `@modelcontextprotocol/sdk`.
 - Run the MCP server from the CLI over stdio with `StdioServerTransport`.
-- Provide a local Streamable HTTP entry point for MCP Inspector and HTTP clients that need connection headers.
 - Keep the project usable by desktop MCP clients, especially Claude Desktop and GitHub Copilot.
 - Connect to LinkedIn's Member Data Portability (Member) API product.
 - Fetch LinkedIn member profile and professional-history data for the authenticated member.
-- Treat the LinkedIn access token as connection/startup secret input. For HTTP MCP transports, read it from `Authorization: Bearer <access_token>` request metadata. For stdio, read the equivalent value from `LINKEDIN_TOKEN`. Use it only to send `Authorization: Bearer <access_token>` to LinkedIn. Do not persist it, log it, echo it into MCP responses, or put it in package scripts.
+- Treat the LinkedIn access token as a startup secret. Read it from the `LINKEDIN_TOKEN` environment variable. Use it only to send `Authorization: Bearer <access_token>` to LinkedIn. Do not persist it, log it, echo it into MCP responses, or put it in package scripts.
 - Make clear in user-facing docs and errors that the Member Data Portability product is currently available only to LinkedIn members in the European Economic Area and Switzerland.
 - Preserve the API's read-only nature. Do not add tools that mutate LinkedIn data.
 
@@ -43,8 +42,7 @@ Important behavior from the docs:
 - Return useful `structuredContent` where practical so assistants can reliably consume profile data.
 - Keep raw data available enough for transparency, but shape common outputs around professional profile context.
 - Use tool inputs for request-shaping values such as requested domains, pagination limits, and start time. Do not require access tokens or API versions as per-tool inputs.
-- Use `LINKEDIN_TOKEN` for stdio token configuration because stdio has no HTTP authorization header. Do not put tokens in package scripts.
-- Use the Inspector's HTTP Authorization header for LinkedIn API calls when testing through the local Streamable HTTP endpoint.
+- Use `LINKEDIN_TOKEN` for token configuration. Do not put tokens in package scripts.
 - Do not write to stdout except through the MCP stdio transport. Diagnostic logs must go to stderr.
 
 Useful initial tools:
@@ -59,7 +57,6 @@ Useful initial tools:
 - Use `npm run build` to type-check and compile.
 - Use `npm run dev` for local development.
 - Use `npm start` to run the compiled stdio server.
-- Use `npm run start:http` to run the compiled local Streamable HTTP server at `/mcp`.
-- Use `npm run inspect:http` with `npm run start:http` to test the Inspector sidebar Authorization header flow. Use `npm run inspect` after `npm run build` only for stdio discovery.
+- Use `npm run inspect` after `npm run build` to test with MCP Inspector.
 - Keep README examples short and friendly for people browsing the project on GitHub.
 - Do not commit secrets, generated tokens, local MCP client config containing tokens, or captured LinkedIn member data.

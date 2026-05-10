@@ -253,7 +253,7 @@ function formatProfileSummary(profile: ProfileSnapshotResult): string {
 
 function makeSuccessResult(text: string, structuredContent: JsonObject) {
   return {
-    content: [{ type: "text" as const, text }],
+    content: [{ type: "text" as const, text: text + "\n\n" + JSON.stringify(structuredContent, null, 2) }],
     structuredContent,
   };
 }

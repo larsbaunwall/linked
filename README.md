@@ -1,6 +1,6 @@
 # <img src="logo.png" alt="Unlinked logo" width="40" /> Unlinked
 
-  Bring your LinkedIn professional profile into AI assistants — without copy-pasting, scraping, or guessing.
+Bring your LinkedIn professional profile into AI assistants — without copy-pasting, scraping, or guessing.
 
 ---
 
@@ -25,13 +25,37 @@ All data access is read-only. Your access token is used only to talk to LinkedIn
 - A LinkedIn Developer app with the **Member Data Portability API (Member)** product enabled (follow [this guide](https://learn.microsoft.com/en-us/linkedin/dma/member-data-portability/member-data-portability-member/?view=li-dma-data-portability-2025-11))
 - A [member access token](https://learn.microsoft.com/en-us/linkedin/dma/member-data-portability/member-data-portability-member/?view=li-dma-data-portability-2025-11#getting-an-access-token) from the LinkedIn OAuth Token Generator (requires EEA/Switzerland membership)
 
-## Quickstart with Claude Desktop
+## Setup
 
-Add Unlinked to your Claude Desktop config (`claude_desktop_config.json`):
+### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
+    "unlinked": {
+      "command": "npx",
+      "args": ["-y", "@larsbaunwall/unlinked"],
+      "env": {
+        "LINKEDIN_TOKEN": "<your_access_token>"
+      }
+    }
+  }
+}
+```
+
+The config file is typically at:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### GitHub Copilot (VS Code)
+
+Add to your user-level MCP config (`File → Preferences → MCP Servers`) or a workspace `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
     "unlinked": {
       "command": "npx",
       "args": ["-y", "@larsbaunwall/unlinked"],
@@ -59,34 +83,17 @@ Add Unlinked to your Claude Desktop config (`claude_desktop_config.json`):
 | `LINKEDIN_TOKEN` | Yes | LinkedIn access token. Accepts `Bearer <token>` or a bare token. |
 | `LINKEDIN_API_VERSION` | No | API version in `YYYYMM` format. Defaults to `202312`. |
 
-## Run locally
+## Development
 
 ```bash
 npm install
 npm run build
-npm start
+npm run dev        # run directly from source with .env
+npm run inspect    # test with MCP Inspector
 ```
 
-The local HTTP MCP endpoint is `http://127.0.0.1:3000/mcp` by default (via `npm run start:http`). Override with `UNLINKED_HTTP_HOST` and `UNLINKED_HTTP_PORT`.
-
-## Test with MCP Inspector
-
-```bash
-npm run build
-npm run start:http   # in one terminal
-npm run inspect:http # in another terminal
-```
-
-In the Inspector sidebar, use `Streamable HTTP`, set the URL to `http://localhost:3000/mcp`, set the auth header name to `Authorization`, and enter `Bearer <access_token>`. Tool discovery works without a valid token; LinkedIn API calls require a valid EEA/Switzerland portability token.
-
-## Development
-
-```bash
-npm run dev
-```
-
-See [AGENTS.md](AGENTS.md) for implementation guidance and [.agents/skills/linkedin-member-data-portability/SKILL.md](.agents/skills/linkedin-member-data-portability/SKILL.md) for LinkedIn API details.
+See [AGENTS.md](AGENTS.md) for implementation guidance.
 
 ## License
 
-ISC
+MIT

@@ -1,20 +1,27 @@
-name: Publish to npm and MCP Registry
+name: Release
 
 on:
-  push:
-    tags:
-      - "v*" # Triggers on version tags like v1.0.0
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        default: patch
+        type: choice
+        options: [patch, minor, major]
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # Required for OIDC authentication with MCP Registry
-      contents: read
+      contents: write # Push commits and tags
+      id-token: write # OIDC authentication with MCP Registry
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
@@ -25,13 +32,36 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm run test --if-present
+      - name: Bump version
+        run: npm version ${{ inputs.bump }} --no-git-tag-version
 
-      - name: Build package
-        run: npm run build --if-present
+      - name: Sync version to server.json
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.tmp && mv server.tmp server.json
 
-      - name: Publish package to npm
+      - name: Sync version to MCP server metadata
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          sed -i "s/version: \"[0-9]*\.[0-9]*\.[0-9]*\"/version: \"$VERSION\"/" src/mcp/server.ts
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test --if-present
+
+      - name: Commit, tag, and push
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json server.json src/mcp/server.ts
+          git commit -m "chore: release v$VERSION"
+          git tag "v$VERSION"
+          git push origin main --follow-tags
+
+      - name: Publish to npm
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -40,13 +70,8 @@ jobs:
         run: |
           curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
 
-      - name: Set version in server.json
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.tmp && mv server.tmp server.json
-
       - name: Authenticate to MCP Registry
         run: ./mcp-publisher login github-oidc
 
-      - name: Publish server to MCP Registry
+      - name: Publish to MCP Registry
         run: ./mcp-publisher publish

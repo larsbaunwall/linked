@@ -15,11 +15,8 @@
     "build": "tsc -p tsconfig.json",
     "test": "echo \"No tests configured\"",
     "start": "node --env-file=.env dist/index.js",
-    "start:http": "node --env-file=.env dist/http.js",
     "dev": "tsx --env-file=.env src/index.ts",
-    "dev:http": "tsx --env-file=.env src/http.ts",
-    "inspect": "mcp-inspector node --env-file=.env dist/index.js",
-    "inspect:http": "mcp-inspector --cli http://localhost:3000/mcp --transport http"
+    "inspect": "mcp-inspector node --env-file=.env dist/index.js"
   },
   "repository": {
     "type": "git",
@@ -33,7 +30,7 @@
     "professional-profile"
   ],
   "author": "Lars Baunwall",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "bugs": {
     "url": "https://github.com/larsbaunwall/unlinked/issues"
