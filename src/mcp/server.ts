@@ -15,7 +15,7 @@ export function createUnlinkedServer({
 }: CreateUnlinkedServerOptions = {}): McpServer {
   const server = new McpServer({
     name: "unlinked-mcp-server",
-    version: "1.0.2",
+    version: "1.0.3",
   });
 
   registerLinkedInTools(server, { client: linkedInClient, config: linkedInConfig });
