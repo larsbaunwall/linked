@@ -71,10 +71,11 @@ Add to your user-level MCP config (`File → Preferences → MCP Servers`) or a 
 
 | Tool | Description |
 | --- | --- |
-| `linkedin_get_profile` | Fetches and combines core professional snapshot domains: profile, positions, education, skills, certifications, and projects |
-| `linkedin_get_snapshot_domain` | Fetches one explicit case-sensitive snapshot domain (e.g. `LANGUAGES`, `PATENTS`) with pagination |
-| `linkedin_get_changelog` | Fetches recent changelog events since an optional epoch-ms `startTime`; returns `nextStartTime` for polling |
-| `linkedin_get_authorization_status` | Checks member/application authorization status to help diagnose changelog consent issues |
+| `linkedin_get_profile` | Get the user's LinkedIn résumé: bio, work history, education, skills, certifications, projects, etc. |
+| `linkedin_get_activity` | Get the user's LinkedIn activity: connections, posts, articles, comments, likes, job applications |
+| `linkedin_get_section` | Get raw data for one specific LinkedIn section by exact name |
+| `linkedin_get_recent_changes` | Get recent changes to the user's LinkedIn data (past 28 days), with cursor-based polling |
+| `linkedin_check_access` | Check whether the user has granted LinkedIn data access — useful for diagnosing missing data |
 
 ## Configuration
 
