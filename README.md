@@ -1,3 +1,5 @@
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Unlinked-0098FF?style=for-the-badge&logo=visualstudiocode&logoColor=ffffff)](vscode:mcp/install?%7B%22name%22%3A%22unlinked%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40larsbaunwall%2Funlinked%22%5D%7D)
+
 # <img src="logo.png" alt="Unlinked logo" width="40" /> Unlinked
 
 Bring your LinkedIn professional profile into AI assistants — without copy-pasting, scraping, or guessing.
@@ -51,7 +53,9 @@ The config file is typically at:
 
 ### GitHub Copilot (VS Code)
 
-Add to your user-level MCP config (`File → Preferences → MCP Servers`) or a workspace `.vscode/mcp.json`:
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Unlinked-0098FF?style=for-the-badge&logo=visualstudiocode&logoColor=ffffff)](vscode:mcp/install?%7B%22name%22%3A%22unlinked%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40larsbaunwall%2Funlinked%22%5D%7D)
+
+Or add to your user-level MCP config (`File → Preferences → MCP Servers`) or a workspace `.vscode/mcp.json`:
 
 ```json
 {
