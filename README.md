@@ -21,7 +21,7 @@ All data access is read-only. Your access token is used only to talk to LinkedIn
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - A LinkedIn Developer app with the **Member Data Portability API (Member)** product enabled (follow [this guide](https://learn.microsoft.com/en-us/linkedin/dma/member-data-portability/member-data-portability-member/?view=li-dma-data-portability-2025-11))
 - A [member access token](https://learn.microsoft.com/en-us/linkedin/dma/member-data-portability/member-data-portability-member/?view=li-dma-data-portability-2025-11#getting-an-access-token) from the LinkedIn OAuth Token Generator (requires EEA/Switzerland membership)
 

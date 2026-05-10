@@ -12,6 +12,10 @@ import {
 export type LinkedInClientOptions = {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
+  /** Per-request timeout in milliseconds. Defaults to 30s. */
+  requestTimeoutMs?: number;
+  /** Max retry attempts for transient failures (429 / 5xx / network errors). Defaults to 3. */
+  maxRetries?: number;
 };
 
 type PagedLinkedInResult = {
@@ -38,13 +42,29 @@ export class LinkedInApiError extends Error {
   }
 }
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+const DEFAULT_MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 500;
+const RETRY_MAX_DELAY_MS = 8_000;
+
 export class LinkedInClient {
   readonly #baseUrl: string;
+  readonly #allowedHost: string;
   readonly #fetch: typeof fetch;
+  readonly #requestTimeoutMs: number;
+  readonly #maxRetries: number;
 
-  constructor({ baseUrl = LINKEDIN_API_BASE_URL, fetchImpl = fetch }: LinkedInClientOptions = {}) {
+  constructor({
+    baseUrl = LINKEDIN_API_BASE_URL,
+    fetchImpl = fetch,
+    requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+    maxRetries = DEFAULT_MAX_RETRIES,
+  }: LinkedInClientOptions = {}) {
     this.#baseUrl = baseUrl;
+    this.#allowedHost = new URL(baseUrl).host;
     this.#fetch = fetchImpl;
+    this.#requestTimeoutMs = requestTimeoutMs;
+    this.#maxRetries = maxRetries;
   }
 
   async getProfile({
@@ -173,7 +193,7 @@ export class LinkedInClient {
       const responseJson = await this.getJson(currentUrl, accessToken, apiVersion);
       elements.push(...asElements(responseJson));
       pageCount += 1;
-      currentUrl = getNextPageUrl(responseJson, this.#baseUrl);
+      currentUrl = getNextPageUrl(responseJson, this.#baseUrl, this.#allowedHost);
     }
 
     return {
@@ -184,29 +204,83 @@ export class LinkedInClient {
   }
 
   private async getJson(url: URL, accessToken: string, apiVersion: string): Promise<JsonObject> {
-    const response = await this.#fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Linkedin-Version": apiVersion,
-        "Content-Type": "application/json",
-      },
-    });
-    const responseJson = await parseLinkedInResponse(response);
-
-    if (!response.ok) {
-      const message = typeof responseJson.message === "string" ? responseJson.message : response.statusText;
-      const serviceErrorCode =
-        typeof responseJson.serviceErrorCode === "number" ? responseJson.serviceErrorCode : undefined;
+    // Defense in depth: never send the bearer token to a host other than the configured LinkedIn API.
+    if (url.protocol !== "https:" || url.host !== this.#allowedHost) {
       throw new LinkedInApiError(
-        getLinkedInFailureMessage(response.status, message),
-        response.status,
-        serviceErrorCode,
-        getRequestId(response.headers),
+        `Refusing to send request to unexpected host "${url.host}". Expected "${this.#allowedHost}".`,
+        0,
       );
     }
 
-    return responseJson;
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= this.#maxRetries; attempt += 1) {
+      try {
+        const response = await this.#fetch(url, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Linkedin-Version": apiVersion,
+            "Content-Type": "application/json",
+          },
+          signal: AbortSignal.timeout(this.#requestTimeoutMs),
+        });
+        const responseJson = await parseLinkedInResponse(response);
+
+        if (response.ok) {
+          return responseJson;
+        }
+
+        const message = typeof responseJson.message === "string" ? responseJson.message : response.statusText;
+        const serviceErrorCode =
+          typeof responseJson.serviceErrorCode === "number" ? responseJson.serviceErrorCode : undefined;
+        const apiError = new LinkedInApiError(
+          getLinkedInFailureMessage(response.status, message),
+          response.status,
+          serviceErrorCode,
+          getRequestId(response.headers),
+        );
+
+        if (!isRetryableStatus(response.status) || attempt === this.#maxRetries) {
+          throw apiError;
+        }
+        lastError = apiError;
+        await sleep(getRetryDelayMs(attempt, response.headers.get("retry-after")));
+        continue;
+      } catch (error) {
+        if (error instanceof LinkedInApiError) {
+          throw error;
+        }
+        // Network error / timeout — retry if attempts remain.
+        lastError = error;
+        if (attempt === this.#maxRetries) {
+          const reason = error instanceof Error ? error.message : String(error);
+          throw new LinkedInApiError(`LinkedIn request failed: ${reason}`, 0);
+        }
+        await sleep(getRetryDelayMs(attempt, null));
+      }
+    }
+    // Unreachable, but keeps the type-checker happy.
+    throw lastError instanceof Error ? lastError : new Error("LinkedIn request failed");
   }
+}
+
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status === 408 || (status >= 500 && status < 600);
+}
+
+function getRetryDelayMs(attempt: number, retryAfterHeader: string | null): number {
+  if (retryAfterHeader) {
+    const seconds = Number(retryAfterHeader);
+    if (Number.isFinite(seconds) && seconds >= 0) {
+      return Math.min(seconds * 1000, RETRY_MAX_DELAY_MS);
+    }
+  }
+  const exponential = RETRY_BASE_DELAY_MS * 2 ** attempt;
+  const jitter = Math.random() * RETRY_BASE_DELAY_MS;
+  return Math.min(exponential + jitter, RETRY_MAX_DELAY_MS);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function asJsonObject(value: unknown): JsonObject {
@@ -221,7 +295,7 @@ function asElements(responseJson: JsonObject): unknown[] {
   return Array.isArray(elements) ? elements : [];
 }
 
-function getNextPageUrl(responseJson: JsonObject, baseUrl: string): URL | undefined {
+function getNextPageUrl(responseJson: JsonObject, baseUrl: string, allowedHost: string): URL | undefined {
   const paging = asJsonObject(responseJson.paging);
   const links = paging.links;
   if (!Array.isArray(links)) {
@@ -230,7 +304,22 @@ function getNextPageUrl(responseJson: JsonObject, baseUrl: string): URL | undefi
 
   const nextLink = links.find((link) => asJsonObject(link).rel === "next");
   const href = asJsonObject(nextLink).href;
-  return typeof href === "string" ? new URL(href, baseUrl) : undefined;
+  if (typeof href !== "string") {
+    return undefined;
+  }
+
+  // Defense in depth: ignore any "next" link that points off the LinkedIn API host so we never
+  // send the bearer token to an attacker-controlled URL if a response is tampered with.
+  let nextUrl: URL;
+  try {
+    nextUrl = new URL(href, baseUrl);
+  } catch {
+    return undefined;
+  }
+  if (nextUrl.protocol !== "https:" || nextUrl.host !== allowedHost) {
+    return undefined;
+  }
+  return nextUrl;
 }
 
 function getRequestId(headers: Headers): string | undefined {
